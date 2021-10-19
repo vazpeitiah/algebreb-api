@@ -1,7 +1,6 @@
 require('dotenv').config()
 const express = require('express')
 const cors = require('cors')
-const passport = require('passport')
 const morgan = require('morgan')
 const {createRoles} = require('./config/initialSetup') 
 
@@ -18,7 +17,6 @@ app.set('port', process.env.PORT || 4000)
 app.use(morgan('dev')); //Para mostrar las peticiones en consola
 app.use(express.json())
 app.use(cors())
-app.use(passport.initialize())
 
 // routes
 app.get('/', (req, res) => res.send('Welcome to algebreb API'))
