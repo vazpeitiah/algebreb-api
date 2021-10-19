@@ -20,8 +20,8 @@ app.use(cors())
 
 // routes
 app.get('/', (req, res) => res.send('Welcome to algebreb API'))
-app.use('/api/auth', require('./routes/auth.route'))
-app.use('/api/users', require('./routes/users.route'))
+app.use('/auth', require('./routes/auth.route'))
+app.use('/users', require('./routes/users.route'))
 
 // start server
 app.listen(app.get('port'), () => console.log('server started listening on port', app.get('port')))
