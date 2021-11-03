@@ -21,7 +21,7 @@ exports.signin = async (req, res, next) => {
 
         const isMatch = await user.isValidPassword(password)
 
-        if (isMatch == false) {
+        if (isMatch === false) {
             return res.json({ success: false,  message: 'Invalid password' })
         }
 
@@ -30,6 +30,7 @@ exports.signin = async (req, res, next) => {
         })
 
         const usrData = {
+            id: user._id,
             name: user.name,
             username,
             email: user.email,
@@ -69,6 +70,7 @@ exports.signup = async (req, res, next) => {
         })
 
         const usrData = {
+            id: user._id,
             name: user.name,
             username,
             email: user.email,
@@ -103,4 +105,40 @@ exports.verifyToken = async (req, res, next) => {
         return res.json({ success: false, message: err.message })
         //next(err)
     }
+}
+
+exports.updateProfile = async (req, res, next) => {
+    const {username, passwd} = req.body
+    const {name, email, password, roles} = req.body
+
+    const user = await User.findOne({username})
+
+    if(!user){
+        return res.json({success: false, message: 'Usuario no encontrado'})
+    }
+
+    const isMatch = await user.isValidPassword(passwd)
+
+    if(!isMatch) {
+        return res.json({success: false, message: 'La contraseña es incorrecta'})
+    }
+
+    const foundRoles = await Role.find({name: {$in: roles}})
+
+    user.name = name;
+    user.roles = foundRoles.map(role => role._id)
+    if(user.email !== email) user.email = email
+    if(password && password !== "") user.password = password
+    
+    await user.save()
+
+    const usrData = {
+        id: user._id,
+        name: user.name,
+        username,
+        email: user.email,
+    }
+    
+    return res.json({success: true, user: usrData })
+
 }

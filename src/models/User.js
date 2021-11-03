@@ -23,7 +23,7 @@ const userSchema = new Schema({
     }]
 })
 
-//Guarda la clave cifrada en la base de datos 
+//Guarda la clave cifrada en la base de datos
 userSchema.pre('save', async function (next) {
     if (!this.isModified('password')) return next();
 

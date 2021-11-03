@@ -6,12 +6,12 @@ const {createRoles} = require('./config/initialSetup')
 
 const app = express()
 
-require('./database') // Mongoose settings
+require('./database')
 
 createRoles() // Crear roles por defeto (alumno y profesor)
     
 // settings
-app.set('port', process.env.PORT || 4000)
+app.set('port', process.env.PORT || 5000)
 
 // middlewares
 app.use(morgan('dev')); //Para mostrar las peticiones en consola
@@ -22,6 +22,7 @@ app.use(cors())
 app.get('/', (req, res) => res.send('Welcome to algebreb API'))
 app.use('/auth', require('./routes/auth.route'))
 app.use('/users', require('./routes/users.route'))
+app.use('/sheets', require('./routes/sheets.route'))
 
 // start server
 app.listen(app.get('port'), () => console.log('server started listening on port', app.get('port')))
