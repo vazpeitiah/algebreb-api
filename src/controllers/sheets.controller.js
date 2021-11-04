@@ -24,7 +24,8 @@ sheetsController.createSheet = async (req, res) => {
         description,
         date,
         type,
-        user
+        user,
+        solutionsType: 'oculta'
     })
 
     const sheet = await Sheet.create(newSheet);
@@ -32,14 +33,13 @@ sheetsController.createSheet = async (req, res) => {
 }
 
 sheetsController.updateSheet = async (req, res) => {
-    const {description, type, exercises} = req.body;
-    
-    //console.log(exercises)
+    const {description, type, exercises, solutionsType} = req.body;
 
     const updSheet = {
         description,
         date: Date.now(),
-        type
+        type,
+        solutionsType
     }
 
     const sheet = await Sheet.findByIdAndUpdate(req.params.sheetId, updSheet, {new: true});

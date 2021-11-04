@@ -10,7 +10,7 @@ const sheetSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.Mixed,
     default: []
   },
-  solution: String
+  solutionsType: String
 })
 
 module.exports = mongoose.model('Sheet', sheetSchema)
