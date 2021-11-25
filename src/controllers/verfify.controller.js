@@ -52,4 +52,23 @@ exports.isAdmin = async (req, res, next) => {
         return res.json({ message: err.message })
     }
 
+}
+
+// Para saber si el usuario tiene el rol de profesor
+exports.isProfesor = async (req, res, next) => {
+    try {
+        const user = await User.findById(req.userID)
+        const roles = await Role.find({ _id: { $in: user.roles } })
+
+        for (let i = 0; i < roles.length; i++) {
+            if (roles[i].name === "profesor") {
+                next()
+                return;
+            }
+        }
+        return res.json({ message: 'Requiere el rol de profesor' })
+    } catch (err) {
+        return res.json({ message: err.message })
+    }
+
 } 

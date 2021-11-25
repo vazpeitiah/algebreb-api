@@ -9,7 +9,8 @@ const groupSchema = new mongoose.Schema({
   students: {
     type: [mongoose.Types.ObjectId],
     ref: "User"
-  }
+  },
+  isOpen: Boolean
 })
 
 module.exports = mongoose.model('Group', groupSchema)

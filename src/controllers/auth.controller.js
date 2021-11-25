@@ -13,8 +13,6 @@ exports.signin = async (req, res, next) => {
     try {
         const user = await User.findOne({ username })
 
-        
-         
         if (!user) {
             return res.json({ success: false,  message: 'Invalid username' })
         }
@@ -26,19 +24,20 @@ exports.signin = async (req, res, next) => {
         }
 
         const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-            expiresIn: 60 * 60 * 24 // 24 horas
+            expiresIn: 60 * 60 * 24 // 1min
         })
+
+        const foundRoles = await Role.find({_id: {$in: user.roles}})
 
         const usrData = {
             id: user._id,
             name: user.name,
             username,
             email: user.email,
-            token
+            token,
+            expiresIn: new Date(Date.now() + 60 * 60 * 24 * 1000), 
+            roles: foundRoles.map(role => role.name)
         }
-
-        const foundRoles = await Role.find({_id: {$in: user.roles}})
-        usrData.roles = foundRoles.map(role => role.name)
 
         return res.status(200).json({ success: true, user: usrData })
 
@@ -56,12 +55,12 @@ exports.signup = async (req, res, next) => {
 
     try {
 
-        const newUser = {
-            name, username, password, email
-        }
-    
         const foundRoles = await Role.find({name: {$in: roles}})
-        newUser.roles = foundRoles.map(role => role._id)
+
+        const newUser = {
+            name, username, password, email,
+            roles: foundRoles.map(role => role._id)
+        }
 
         const user = await User.create(newUser) // Arreglar para ver nombre de usuario ya existente
         
@@ -69,16 +68,17 @@ exports.signup = async (req, res, next) => {
             expiresIn: 60 * 60 * 24 // 24 horas
         })
 
+        const froles = await Role.find({_id: {$in: user.roles}})
+
         const usrData = {
             id: user._id,
             name: user.name,
             username,
             email: user.email,
-            token
+            token,
+            expiresIn: new Date(Date.now() + 60 * 60 * 24 * 1000),
+            roles: froles.map(role => role.name)
         }
-
-        const froles = await Role.find({_id: {$in: user.roles}})
-        usrData.roles = froles.map(role => role.name)
 
         return res.json({ success: true, user:usrData})
 

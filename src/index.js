@@ -23,6 +23,9 @@ app.get('/', (req, res) => res.send('Welcome to algebreb API'))
 app.use('/auth', require('./routes/auth.route'))
 app.use('/users', require('./routes/users.route'))
 app.use('/sheets', require('./routes/sheets.route'))
+app.use('/groups', require('./routes/groups.route'))
+app.use('/exams', require('./routes/exam.route'))
+
 
 // start server
 app.listen(app.get('port'), () => console.log('server started listening on port', app.get('port')))
