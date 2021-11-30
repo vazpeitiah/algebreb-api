@@ -16,10 +16,14 @@ const ApplyExamSchema = new mongoose.Schema({
     default: 0
   },
   answers: {
-    type: [String],
+    type: [mongoose.SchemaTypes.Mixed],
     default: []
   },
-  feedback: String
+  feedback: String,
+  isActive: {
+    type: Boolean, 
+    default: true
+  }
 })
 
 module.exports = mongoose.model('ApplyExam', ApplyExamSchema)

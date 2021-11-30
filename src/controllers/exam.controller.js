@@ -6,10 +6,48 @@ const Group = require("../models/Group")
 
 const examController = {}
 
+const getDuration = (sdate, edate) => {
+  const startDate = new Date(sdate)
+  const endDate = new Date(edate)
+
+  let diffTime = Math.abs(startDate - endDate)  
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
+  diffTime = diffTime %  (1000 * 60 * 60 * 24);
+  const diffHours = Math.floor(diffTime / (1000 * 60 * 60))
+  diffTime = diffTime %  (1000 * 60 * 60);
+  const diffMin = Math.floor(diffTime / (1000 * 60))
+  
+  let str = ''
+  
+  if(diffDays !== 0) {
+    if(diffDays === 1) {
+      str += `${diffDays} día ` 
+    } else {
+      str += `${diffDays} días `
+    }
+  }
+  
+  if(diffHours !== 0) {
+    if(diffHours === 1) {
+      str += `${diffHours} hr `
+    } else {
+      str += `${diffHours} hrs `
+    }
+  }
+  
+ if(diffMin !== 0) {
+    str += `${diffMin} min`
+  }
+  
+  return str
+}
+
+
 examController.getExamsByGroup = async (req, res) => {
   try {
     const exams = await Exam.find({group: req.params.groupId}).populate('group').populate('sheet', {description: 1})
-    return res.json({success:true, exams})
+    const nexams = exams.map( form => ({...form._doc, duration: getDuration(form._doc.startDate, form._doc.endDate)}))
+    return res.json({success:true, exams:nexams})
   } catch (err) {
     return res.json({success: false, message: err.message})
   }
@@ -57,9 +95,36 @@ examController.deleteExam = async (req, res) => {
   }
 }
 
-examController.getApplyExam = async (req, res) => {
+examController.getFormsExam = async (req, res) => {
   try {
     const exams = await ApplyExam.find({student: req.params.studentId}).populate({
+      path: 'exam',
+      populate: [{ path: 'sheet', select: 'description'}, { path: 'group', select: 'name'}],
+    })
+
+    const nexams = exams.map( form => ({...form._doc, duration: getDuration(form._doc.exam.startDate, form._doc.exam.endDate)}))
+
+    return res.json({success:true, exams: nexams})
+  } catch (err) {
+    return res.json({success: false, message: err.message})
+  }
+}
+
+examController.getExam = async (req, res) => {
+  try {
+    const exam = await Exam.findById(req.params.examId)
+      .populate({path: 'sheet', select: 'description'})
+      .populate({path: 'group', select: 'name'})
+    return res.json({success:true, exam})
+  } catch (err) {
+    return res.json({success: false, message: err.message})
+  }
+}
+
+examController.getKardex = async (req, res) => {
+  const {student, group} = req.body
+  try {
+    const exams = await ApplyExam.find({ student, group}).populate({
       path: 'exam',
       populate: [{ path: 'sheet', select: 'description'}, { path: 'group', select: 'name'}],
     })
@@ -69,13 +134,76 @@ examController.getApplyExam = async (req, res) => {
   }
 }
 
-examController.getSingleApply = async (req, res) => {
+examController.updateExam = async (req, res) => {
+  const {startDate, endDate, type} = req.body
+  try {
+    const exam = await Exam.findByIdAndUpdate(req.params.examId, 
+      {startDate, endDate, type}, {new: true}).populate('group').populate('sheet', {description: 1})
+    return res.json({success:true, exam})
+  } catch (err) {
+    return res.json({success: false, message: err.message})
+  }
+} 
+
+examController.getFormExam = async (req, res) => {
   try {
     const exam = await ApplyExam.findById(req.params.examId).populate({
       path: 'exam',
       populate: [{ path: 'sheet'}, { path: 'group', select: 'name'}],
     })
-    return res.json({success:true, exam})
+
+    const today = new Date()
+    const startDate = new Date(exam.exam.startDate)
+    const endDate = new Date(exam.exam.endDate)
+
+    if( today >= startDate  || !exam.isActive ) {
+      return res.json({success:true, exam})
+    } else {
+      return res.json({success: false, message: 'El examen aún no ha comenzado.'})
+    }
+  } catch (err) {
+    return res.json({success: false, message: err.message})
+  }
+}
+
+examController.getExams = async (req, res) => {
+  try {
+    const exams = await ApplyExam.find({exam: req.params.examId}).populate({
+      path: 'exam',
+      populate: [{ path: 'sheet'}, { path: 'group', select: 'name'}],
+    }).populate({
+      path: 'student',
+      select: 'name'
+    })
+    return res.json({success:true, exams})
+  } catch (err) {
+    return res.json({success: false, message: err.message})
+  }
+}
+
+examController.submitExam = async (req, res) => {
+  const {exam, student, grade , answers, feedback, isActive} = req.body
+  try {
+    const foundExam = await Exam.findById(exam)
+    const today = new Date()
+    const startDate = new Date(foundExam.startDate)
+    const endDate = new Date(foundExam.endDate)
+
+    const foundFormExam = await ApplyExam.findById(req.params.examId)
+
+    if(!foundFormExam.isActive) {
+      return res.json({success: false, message: 'Ya has agotado tus intentos.'})
+    }
+    
+    if(today < startDate || today > endDate) {
+      return res.json({success: false, message: 'Fecha incorrecta.'})
+    }
+
+    const updatedExam = await ApplyExam.findByIdAndUpdate(req.params.examId, {
+      exam, student, grade, answers, feedback, isActive
+    }, {new: true})
+
+    return res.json({success:true, exam:updatedExam})
   } catch (err) {
     return res.json({success: false, message: err.message})
   }

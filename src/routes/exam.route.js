@@ -4,11 +4,15 @@ const router = Router()
 const {verifyToken, isProfesor} = require('../controllers/verfify.controller')
 const examController = require('../controllers/exam.controller')
 
-router.route('/:examId').get(verifyToken, examController.getSingleApply)
-router.route('/bystudent/:studentId').get(verifyToken, examController.getApplyExam)
-router.route('/').post(verifyToken, isProfesor, examController.createExam)
-router.route('/bygroup/:groupId').get(verifyToken, isProfesor, examController.getExamsByGroup)
-router.route('/:examId').delete(verifyToken, isProfesor, examController.deleteExam)
-
+router.route('/:examId').get(verifyToken, examController.getFormExam) // Get single exam
+router.route('/data/:examId').get(verifyToken, examController.getExam) // Get single exam data
+router.route('/bystudent/:studentId').get(verifyToken, examController.getFormsExam) // get exams for an student
+router.route('/kardex').post(verifyToken, isProfesor, examController.getKardex) // get kardex of student
+router.route('/').post(verifyToken, isProfesor, examController.createExam) // create new exam
+router.route('/teacher/:examId').get(verifyToken, isProfesor, examController.getExams) // get exams for teacher
+router.route('/:examId').put(verifyToken, isProfesor, examController.updateExam) // update exam
+router.route('/submit/:examId').post(verifyToken, examController.submitExam) // submit answers of an exam
+router.route('/bygroup/:groupId').get(verifyToken, isProfesor, examController.getExamsByGroup) // get exams of one group
+router.route('/:examId').delete(verifyToken, isProfesor, examController.deleteExam) // delete exam
 
 module.exports = router
