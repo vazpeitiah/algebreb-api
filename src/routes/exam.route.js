@@ -7,7 +7,7 @@ const examController = require('../controllers/exam.controller')
 router.route('/:examId').get(verifyToken, examController.getFormExam) // Get single exam
 router.route('/data/:examId').get(verifyToken, examController.getExam) // Get single exam data
 router.route('/bystudent/:studentId').get(verifyToken, examController.getFormsExam) // get exams for an student
-router.route('/kardex').post(verifyToken, isProfesor, examController.getKardex) // get kardex of student
+router.route('/kardex').post(verifyToken, examController.getKardex) // get kardex of student
 router.route('/').post(verifyToken, isProfesor, examController.createExam) // create new exam
 router.route('/teacher/:examId').get(verifyToken, isProfesor, examController.getExams) // get exams for teacher
 router.route('/:examId').put(verifyToken, isProfesor, examController.updateExam) // update exam
