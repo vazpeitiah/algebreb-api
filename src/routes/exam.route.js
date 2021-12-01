@@ -11,6 +11,7 @@ router.route('/kardex').post(verifyToken, examController.getKardex) // get karde
 router.route('/').post(verifyToken, isProfesor, examController.createExam) // create new exam
 router.route('/teacher/:examId').get(verifyToken, isProfesor, examController.getExams) // get exams for teacher
 router.route('/:examId').put(verifyToken, isProfesor, examController.updateExam) // update exam
+router.put('/data/:examId', verifyToken, isProfesor, examController.updateApplyExam)
 router.route('/submit/:examId').post(verifyToken, examController.submitExam) // submit answers of an exam
 router.route('/bygroup/:groupId').get(verifyToken, isProfesor, examController.getExamsByGroup) // get exams of one group
 router.route('/:examId').delete(verifyToken, isProfesor, examController.deleteExam) // delete exam

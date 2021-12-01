@@ -209,4 +209,22 @@ examController.submitExam = async (req, res) => {
   }
 }
 
+examController.updateApplyExam = async (req, res) => {
+  const {exam, student, grade , answers, feedback, isActive} = req.body
+  try {
+    const updatedExam = await ApplyExam.findByIdAndUpdate(req.params.examId, {
+      exam, student, grade, answers, feedback, isActive
+    }, {new: true}).populate({
+      path: 'student',
+      select: 'name'
+    }).populate({
+      path: 'exam',
+      populate: [{ path: 'sheet', select: 'description'}, { path: 'group', select: 'name'}],
+    })
+    return res.json({success:true, exam:updatedExam})
+  } catch (err) {
+    return res.json({success: false, message: err.message})
+  }
+}
+
 module.exports = examController
