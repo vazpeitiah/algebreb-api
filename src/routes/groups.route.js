@@ -9,7 +9,7 @@ router.get('/bystudent/:studentId', verifyToken, groupsController.getGroupsByStu
 router.get('/:groupId', verifyToken, isProfesor, groupsController.getGroupById)
 router.post('/', verifyToken, isProfesor, groupsController.createGroup)
 router.post('/enroll', verifyToken, groupsController.enrollStudent)
-router.put('/:groupId', verifyToken, isProfesor, groupsController.updateGroup)
+router.put('/:groupId', verifyToken, groupsController.updateGroup)
 router.delete('/:groupId', verifyToken, isProfesor, groupsController.deleteGroup)
 
 module.exports = router
