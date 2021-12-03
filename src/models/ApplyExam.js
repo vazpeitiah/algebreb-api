@@ -23,6 +23,10 @@ const ApplyExamSchema = new mongoose.Schema({
   isActive: {
     type: Boolean, 
     default: true
+  },
+  images: {
+    type: [String],
+    default: []
   }
 })
 

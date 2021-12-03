@@ -227,4 +227,19 @@ examController.updateApplyExam = async (req, res) => {
   }
 }
 
+examController.uploadImages = async (req, res) => {
+  const {images} = req.body
+  try {
+    const updatedExam = await ApplyExam.findByIdAndUpdate(req.params.examId, {images}, {new: true})
+    .populate({
+      path: 'exam',
+      populate: [{ path: 'sheet'}, { path: 'group', select: 'name'}],
+    })
+      
+    return res.json({success:true, exam: updatedExam})
+  } catch (err) {
+    return res.json({success: false, message: err.message})
+  }
+}
+
 module.exports = examController
