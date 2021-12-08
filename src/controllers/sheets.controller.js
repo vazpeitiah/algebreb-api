@@ -18,28 +18,34 @@ sheetsController.getSheetsByUser = async (req, res) => {
 }
 
 sheetsController.createSheet = async (req, res) => {
-    const {description, date, type, user} = req.body
-    
-    const newSheet = new Sheet({
+    const {description, date, type, user, exercises, params} = req.body
+
+    let body = {
         description,
         date,
         type,
         user,
-        solutionsType: 'oculta'
-    })
+        solutionsType: 'oculta',
+        hidden: false
+    }
 
-    const sheet = await Sheet.create(newSheet);
+    if(exercises  && params) {
+        body = {...body, exercises, params, date: Date.now(), hidden: true}
+    }
+
+    const sheet = await Sheet.create(new Sheet(body));
     res.json(sheet)
 }
 
 sheetsController.updateSheet = async (req, res) => {
-    const {description, type, exercises, solutionsType} = req.body;
+    const {description, type, exercises, solutionsType, params} = req.body;
 
     const updSheet = {
         description,
         date: Date.now(),
         type,
-        solutionsType
+        solutionsType,
+        params
     }
 
     const sheet = await Sheet.findByIdAndUpdate(req.params.sheetId, updSheet, {new: true});

@@ -19,7 +19,11 @@ const ExamSchema = new mongoose.Schema({
     type: Date,
     default: Date.now() + 60 * 60 * 24 * 1000 // next day
   },
-  type: String
+  type: String,
+  different: {
+    type: Boolean,
+    default: true
+  }
 })
 
 module.exports = mongoose.model('Exam', ExamSchema)

@@ -16,5 +16,5 @@ router.route('/submit/:examId').post(verifyToken, examController.submitExam) // 
 router.route('/bygroup/:groupId').get(verifyToken, isProfesor, examController.getExamsByGroup) // get exams of one group
 router.route('/:examId').delete(verifyToken, isProfesor, examController.deleteExam) // delete exam
 router.post('/uploadIMG/:examId', verifyToken, examController.uploadImages)
-
+router.post('/updatesheet/:examId', verifyToken, isProfesor, examController.updateSheet)
 module.exports = router

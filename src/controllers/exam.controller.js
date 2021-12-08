@@ -2,6 +2,7 @@ const { json } = require("body-parser")
 const ApplyExam = require("../models/ApplyExam")
 const Exam = require("../models/Exam")
 const Group = require("../models/Group")
+const Sheet = require("../models/Sheet")
 
 
 const examController = {}
@@ -54,26 +55,37 @@ examController.getExamsByGroup = async (req, res) => {
 } 
 
 examController.createExam = async (req, res) => {
-  const {sheet, group, startDate, endDate, type} = req.body
+  const {sheet, group, startDate, endDate, type, different} = req.body
   
   if(!sheet || !group)
     return res.json({success: false, message: "Faltan los parametros sheet y group"})
 
   try { 
     const newExam = await Exam.create({
-      sheet, group, startDate, endDate, type
+      sheet, group, startDate, endDate, type, different
     })
 
     const foundGroup = await Group.findById(newExam.group).populate('students')
+    
+    let examsForm = []
 
-    foundGroup.students.forEach(async (student) => {
+    for (let i = 0; i < foundGroup.students.length; i++) {
+      const newApplyExam = await ApplyExam.create({
+        exam: newExam._id, 
+        student: foundGroup.students[i]._id,
+        sheet
+      })
+      examsForm.push(newApplyExam._id)
+    }
+
+/*     foundGroup.students.forEach(async (student) => {
       await ApplyExam.create({
         exam: newExam._id, 
         student: student._id, 
        })
     });
-
-    return res.json({success:true, exam:newExam})
+ */
+    return res.json({success:true, exam:newExam, examsForm})
   } catch (err) {
     return res.json({success: false, message: err.message})
   }
@@ -86,7 +98,10 @@ examController.deleteExam = async (req, res) => {
     const arr = await ApplyExam.find({exam: deletedExam._id})
 
     for(let i=0; i<arr.length; ++i) {
-      await ApplyExam.findByIdAndDelete(arr[i]._id)
+      const deleted = await ApplyExam.findByIdAndDelete(arr[i]._id)
+      if(!deletedExam.sheet.equals(deleted.sheet)) {
+        await Sheet.findByIdAndDelete(deleted.sheet);
+      }
     } 
 
     return res.json({success:true, exam:deletedExam})
@@ -150,7 +165,7 @@ examController.getFormExam = async (req, res) => {
     const exam = await ApplyExam.findById(req.params.examId).populate({
       path: 'exam',
       populate: [{ path: 'sheet'}, { path: 'group', select: 'name'}],
-    })
+    }).populate('sheet')
 
     const today = new Date()
     const startDate = new Date(exam.exam.startDate)
@@ -237,6 +252,16 @@ examController.uploadImages = async (req, res) => {
     })
       
     return res.json({success:true, exam: updatedExam})
+  } catch (err) {
+    return res.json({success: false, message: err.message})
+  }
+}
+
+examController.updateSheet = async (req, res) => {
+  const {sheet} = req.body
+  try {
+    const updatedExam = await ApplyExam.findByIdAndUpdate(req.params.examId, {sheet}, {new: true})
+    return res.json({success:true, exam:updatedExam})
   } catch (err) {
     return res.json({success: false, message: err.message})
   }

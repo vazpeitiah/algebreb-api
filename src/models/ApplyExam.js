@@ -6,6 +6,11 @@ const ApplyExamSchema = new mongoose.Schema({
     ref: 'Exam',
     required: true
   },
+  sheet: {
+    type: mongoose.SchemaTypes.ObjectId,
+    ref: 'Sheet',
+    required: true
+  },
   student: {
     type: mongoose.SchemaTypes.ObjectId,
     ref: 'User',

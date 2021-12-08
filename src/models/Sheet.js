@@ -9,7 +9,15 @@ const sheetSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.Mixed,
     default: []
   },
-  solutionsType: String
+  solutionsType: String,
+  params: {
+    type: mongoose.Schema.Types.Mixed,
+    default: []
+  },
+  hidden: {
+    type: Boolean,
+    default: false
+  }
 })
 
 module.exports = mongoose.model('Sheet', sheetSchema)
