@@ -139,10 +139,10 @@ examController.getExam = async (req, res) => {
 examController.getKardex = async (req, res) => {
   const {student, group} = req.body
   try {
-    const exams = await ApplyExam.find({ student, group}).populate({
+    const exams = await ApplyExam.find({student, group}).populate({
       path: 'exam',
       populate: [{ path: 'sheet', select: 'description'}, { path: 'group', select: 'name'}],
-    })
+    }).populate('sheet')
     return res.json({success:true, exams})
   } catch (err) {
     return res.json({success: false, message: err.message})
@@ -185,7 +185,7 @@ examController.getExams = async (req, res) => {
   try {
     const exams = await ApplyExam.find({exam: req.params.examId}).populate({
       path: 'exam',
-      populate: [{ path: 'sheet'}, { path: 'group', select: 'name'}],
+      populate: [{ path: 'group', select: 'name'}],
     }).populate({
       path: 'student',
       select: 'name'
@@ -235,7 +235,7 @@ examController.updateApplyExam = async (req, res) => {
     }).populate({
       path: 'exam',
       populate: [{ path: 'sheet', select: 'description'}, { path: 'group', select: 'name'}],
-    })
+    }).populate('sheet')
     return res.json({success:true, exam:updatedExam})
   } catch (err) {
     return res.json({success: false, message: err.message})
@@ -249,7 +249,7 @@ examController.uploadImages = async (req, res) => {
     .populate({
       path: 'exam',
       populate: [{ path: 'sheet'}, { path: 'group', select: 'name'}],
-    })
+    }).populate('sheet')
       
     return res.json({success:true, exam: updatedExam})
   } catch (err) {
