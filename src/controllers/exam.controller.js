@@ -7,48 +7,11 @@ const Sheet = require("../models/Sheet")
 
 const examController = {}
 
-const getDuration = (sdate, edate) => {
-  const startDate = new Date(sdate)
-  const endDate = new Date(edate)
-
-  let diffTime = Math.abs(startDate - endDate)  
-  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
-  diffTime = diffTime %  (1000 * 60 * 60 * 24);
-  const diffHours = Math.floor(diffTime / (1000 * 60 * 60))
-  diffTime = diffTime %  (1000 * 60 * 60);
-  const diffMin = Math.floor(diffTime / (1000 * 60))
-  
-  let str = ''
-  
-  if(diffDays !== 0) {
-    if(diffDays === 1) {
-      str += `${diffDays} día ` 
-    } else {
-      str += `${diffDays} días `
-    }
-  }
-  
-  if(diffHours !== 0) {
-    if(diffHours === 1) {
-      str += `${diffHours} hr `
-    } else {
-      str += `${diffHours} hrs `
-    }
-  }
-  
- if(diffMin !== 0) {
-    str += `${diffMin} min`
-  }
-  
-  return str
-}
-
-
 examController.getExamsByGroup = async (req, res) => {
   try {
     const exams = await Exam.find({group: req.params.groupId}).populate('group').populate('sheet', {description: 1})
-    const nexams = exams.map( form => ({...form._doc, duration: getDuration(form._doc.startDate, form._doc.endDate)}))
-    return res.json({success:true, exams:nexams})
+    ///exams.forEach((ex) => console.log(ex.sheet))
+    return res.json({success:true, exams})
   } catch (err) {
     return res.json({success: false, message: err.message})
   }
@@ -117,9 +80,7 @@ examController.getFormsExam = async (req, res) => {
       populate: [{ path: 'sheet', select: 'description'}, { path: 'group', select: 'name'}],
     })
 
-    const nexams = exams.map( form => ({...form._doc, duration: getDuration(form._doc.exam.startDate, form._doc.exam.endDate)}))
-
-    return res.json({success:true, exams: nexams})
+    return res.json({success:true, exams})
   } catch (err) {
     return res.json({success: false, message: err.message})
   }

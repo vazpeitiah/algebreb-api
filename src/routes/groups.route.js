@@ -1,15 +1,15 @@
 const {Router} = require('express')
 const router = Router()
 
-const groupsController = require('../controllers/groups.controller')
+const gpsCtrl = require('../controllers/groups.controller')
 const {verifyToken, isProfesor} = require('../controllers/verfify.controller')
 
-router.get('/byuser/:userId', verifyToken, isProfesor, groupsController.getGroupsByUserId)
-router.get('/bystudent/:studentId', verifyToken, groupsController.getGroupsByStudent)
-router.get('/:groupId', verifyToken, isProfesor, groupsController.getGroupById)
-router.post('/', verifyToken, isProfesor, groupsController.createGroup)
-router.post('/enroll', verifyToken, groupsController.enrollStudent)
-router.put('/:groupId', verifyToken, groupsController.updateGroup)
-router.delete('/:groupId', verifyToken, isProfesor, groupsController.deleteGroup)
+router.get('/bystudent/:userId', verifyToken, gpsCtrl.getGroupsByStudent)
+router.get('/byteacher/:userId', verifyToken, isProfesor, gpsCtrl.getGroupsByTeacher)
+router.get('/:groupId', verifyToken, isProfesor, gpsCtrl.getGroupById)
+router.post('/', verifyToken, isProfesor, gpsCtrl.createGroup)
+router.put('/:groupId', verifyToken, gpsCtrl.updateGroup)
+router.delete('/:groupId', verifyToken, isProfesor, gpsCtrl.deleteGroup)
+router.post('/enroll', verifyToken, gpsCtrl.enrollStudent)  //Inscribir estudiante en un grupo
 
 module.exports = router

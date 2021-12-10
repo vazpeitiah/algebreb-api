@@ -1,67 +1,118 @@
 const Group = require("../models/Group")
 const User = require("../models/User")
 const Role = require("../models/Role")
+const Exam = require("../models/Exam")
+const ApplyExam = require("../models/ApplyExam")
+const Sheet = require('../models/Sheet')
 
 const groupsController = {}
 
-groupsController.getGroupsByUserId = async (req, res) => {
-  const groups = await Group.find({ teacher: req.params.userId }).populate("students")
-  return res.json(groups)
+groupsController.getGroupsByTeacher = async (req, res) => {
+  try {
+    const groups = await Group.find({ teacher: req.params.userId }).populate("students")
+    return res.json({ success:true, groups})
+  } catch (err) {
+    return res.json({ success:false, message: err.message })
+  }
 }
 
 groupsController.getGroupsByStudent = async (req, res) => {
   try {
-    const user = await User.findById(req.params.studentId)
+    const user = await User.findById(req.params.userId)
     const groups = await Group.find().populate("teacher", {name:1, email:2})
 
-    const groupsOfStudent = groups.filter(group => group.students.includes(user._id))
-    return res.json({ success:true, groups: groupsOfStudent })
+    const studentGroups = groups.filter(group => group.students.includes(user._id))
+    return res.json({ success:true, groups: studentGroups })
   } catch (err) {
     return res.json({ success:false, message: err.message })
   }
 }
 
 groupsController.getGroupById = async (req, res) => {
-  const group = await Group.findById(req.params.groupId).populate("students")
-  return res.json(group)
+  try {
+    const group = await Group.findById(req.params.groupId).populate("students")
+    return res.json({ success:true, group })
+  } catch (err) {
+    return res.json({ success:false, message: err.message })
+  }
 }
 
 groupsController.createGroup = async (req, res) => {
-  const { name, teacher, isOpen} = req.body
+  const { name, teacher} = req.body
 
-  if (!name || !teacher || isOpen === null || isOpen === undefined) {
+  if (!name || !teacher) {
     return res.json({
       success: false,
-      message: "Proveer los parametros name, teacher y isOpen",
+      message: "Proveer los parametros name y teacher",
     })
   }
 
-  const newGroup = await Group.create({ name, teacher, isOpen })
-  res.json(newGroup)
+  try {
+    const group = await Group.create({ name, teacher })
+    return res.json({ success: true, group })
+  } catch (err) {
+    return res.json({ success: false, message: err.message })
+  }
 }
 
 groupsController.updateGroup = async (req, res) => {
-  const { name, teacher, students, isOpen } = req.body
-  const updatedGroup = await Group.findByIdAndUpdate(
-    req.params.groupId,
-    {
-      name,
-      teacher,
-      students,
-      isOpen,
-    },
-    { new: true }
-  ).populate('students')
-  return res.json(updatedGroup)
+  const { name, teacher, students } = req.body
+
+  if(!name || !teacher || !students) {
+    return res.json({
+      success: false,
+      message: "Proveer los parametros name, teacher y students",
+    })
+  }
+
+  try {
+    const updatedGroup = await Group.findByIdAndUpdate(
+      req.params.groupId,
+      {
+        name,
+        teacher,
+        students
+      },
+      { new: true }
+    ).populate('students')
+    return res.json({ success: true, group: updatedGroup })
+  } catch (err) {
+    return res.json({ success: false, message: err.message })
+  }
 }
 
 groupsController.deleteGroup = async (req, res) => {
-  const deletedGroup = await Group.findByIdAndDelete(req.params.groupId)
-  return res.json(deletedGroup)
+  try {
+    const group = await Group.findByIdAndDelete(req.params.groupId)
+    const exams = await Exam.find({group: group._id})
+
+    for (let j = 0; j < exams.length; j++) {
+      const deletedExam = await Exam.findByIdAndDelete(exams[j]._id)
+      const arr = await ApplyExam.find({exam: deletedExam._id})
+      for(let i=0; i<arr.length; ++i) {
+        const deleted = await ApplyExam.findByIdAndDelete(arr[i]._id)
+        if(!deletedExam.sheet.equals(deleted.sheet)) {
+          await Sheet.findByIdAndDelete(deleted.sheet);
+        }
+      }
+    }
+
+    return res.json({ success: true, group })
+  } catch (err) {
+    return res.json({ success: false, message: err.message })
+  }
 }
 
 groupsController.enrollStudent = async (req, res) => {
   const { student, groupId } = req.body
+  
+  if(!student || !groupId) {
+    return res.json({
+      success: false,
+      message: "Proveer los parametros student y groupId",
+    })
+  }
+  
   try {
     const userFound = await User.findOne({ username:student })
     const group = await Group.findById(groupId)
@@ -75,7 +126,7 @@ groupsController.enrollStudent = async (req, res) => {
           const groupUpdated = await Group.findByIdAndUpdate(group._id, {...group}, {new: true}).populate('students')
           return res.json({ success: true, group:groupUpdated})
         } else {
-          return res.json({ success: false, message: "El usuario ya está inscrito en este grupo" })
+          return res.json({ success: false, message: "El usuario ya esta inscrito en este grupo" })
         }
       } else {
         return res.json({ success: false, message: "El usuario no es de tipo alumno" })
@@ -84,7 +135,7 @@ groupsController.enrollStudent = async (req, res) => {
       return res.json({ success: false, message: "Usuario no encontrado" })
     }
   } catch (err) {
-    return res.json({ success: false, message: "Clave de acceso no válida" })
+    return res.json({ success: false, message: "Clave de acceso no valida" })
   }
 }
 
