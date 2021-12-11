@@ -1,6 +1,6 @@
 const Sheet = require('../models/Sheet')
+const ExamData = require('../models/ExamData')
 const Exam = require('../models/Exam')
-const ApplyExam = require('../models/ApplyExam')
 
 const sheetsController = {};
 
@@ -95,14 +95,14 @@ sheetsController.updateSheet = async (req, res) => {
 sheetsController.deleteSheet = async (req, res) => {
     try {
         const sheet = await Sheet.findByIdAndDelete(req.params.sheetId);
-        const exams = await Exam.find({sheet: sheet._id})
+        const data = await ExamData.find({sheet: sheet._id})
 
-        for (let j = 0; j < exams.length; j++) {
-            const deletedExam = await Exam.findByIdAndDelete(exams[j]._id)
-            const arr = await ApplyExam.find({exam: deletedExam._id})
-            for(let i=0; i<arr.length; ++i) {
-                const deleted = await ApplyExam.findByIdAndDelete(arr[i]._id)
-                if(!deletedExam.sheet.equals(deleted.sheet)) {
+        for (let j = 0; j < data.length; j++) {
+            const deletedData = await ExamData.findByIdAndDelete(data[j]._id)
+            const exams = await Exam.find({exam: deletedData._id})
+            for(let i=0; i<exams.length; ++i) {
+                const deleted = await Exam.findByIdAndDelete(exams[i]._id)
+                if(!deletedData.sheet.equals(deleted.sheet)) {
                 await Sheet.findByIdAndDelete(deleted.sheet);
                 }
             }

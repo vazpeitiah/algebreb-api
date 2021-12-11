@@ -1,82 +1,75 @@
-const { json } = require("body-parser")
-const ApplyExam = require("../models/ApplyExam")
 const Exam = require("../models/Exam")
+const ExamData = require("../models/ExamData")
 const Group = require("../models/Group")
 const Sheet = require("../models/Sheet")
-
 
 const examController = {}
 
 examController.getExamsByGroup = async (req, res) => {
   try {
-    const exams = await Exam.find({group: req.params.groupId}).populate('group').populate('sheet', {description: 1})
-    ///exams.forEach((ex) => console.log(ex.sheet))
-    return res.json({success:true, exams})
+    const exams = await ExamData.find({ group: req.params.groupId })
+      .populate('group')
+      .populate('sheet', { description: 1 })
+    return res.json({ success: true, exams })
   } catch (err) {
-    return res.json({success: false, message: err.message})
+    return res.json({ success: false, message: err.message })
   }
 } 
 
 examController.createExam = async (req, res) => {
   const {sheet, group, startDate, endDate, type, different} = req.body
   
-  if(!sheet || !group)
-    return res.json({success: false, message: "Faltan los parametros sheet y group"})
-
+  if(!sheet || !group) {
+    return res.json({
+      success: false,
+      message: "Faltan los parametros sheet y group"
+    })
+  }
+    
   try { 
-    const newExam = await Exam.create({
+    const data = await ExamData.create({
       sheet, group, startDate, endDate, type, different
     })
 
-    const foundGroup = await Group.findById(newExam.group).populate('students')
+    const foundGroup = await Group.findById(data.group).populate('students')
     
     let examsForm = []
 
     for (let i = 0; i < foundGroup.students.length; i++) {
-      const newApplyExam = await ApplyExam.create({
-        exam: newExam._id, 
+      const newExam = await Exam.create({
+        examData: data._id, 
         student: foundGroup.students[i]._id,
         sheet
       })
-      examsForm.push(newApplyExam._id)
+      examsForm.push(newExam._id)
     }
-
-/*     foundGroup.students.forEach(async (student) => {
-      await ApplyExam.create({
-        exam: newExam._id, 
-        student: student._id, 
-       })
-    });
- */
-    return res.json({success:true, exam:newExam, examsForm})
+    return res.json({ success:true, exam:data, examsForm })
   } catch (err) {
-    return res.json({success: false, message: err.message})
+    return res.json({ success: false, message: err.message })
   }
 }
 
 examController.deleteExam = async (req, res) => {
   try { 
-    const deletedExam = await Exam.findByIdAndDelete(req.params.examId)
+    const data = await ExamData.findByIdAndDelete(req.params.examId)
+    const exams = await Exam.find({ examData: data._id })
 
-    const arr = await ApplyExam.find({exam: deletedExam._id})
-
-    for(let i=0; i<arr.length; ++i) {
-      const deleted = await ApplyExam.findByIdAndDelete(arr[i]._id)
-      if(!deletedExam.sheet.equals(deleted.sheet)) {
-        await Sheet.findByIdAndDelete(deleted.sheet);
+    for(let i=0; i<exams.length; ++i) {
+      const deletedExam = await Exam.findByIdAndDelete(exams[i]._id)
+      if(!data.sheet.equals(deletedExam.sheet)) {
+        await Sheet.findByIdAndDelete(deletedExam.sheet);
       }
     } 
-
-    return res.json({success:true, exam:deletedExam})
+    return res.json({ success:true, exam:data })
   } catch (err) {
-    return res.json({success: false, message: err.message})
+    return res.json({ success: false, message: err.message })
   }
 }
 
 examController.getFormsExam = async (req, res) => {
   try {
-    const exams = await ApplyExam.find({student: req.params.studentId}).populate({
-      path: 'exam',
+    const exams = await Exam.find({student: req.params.studentId}).populate({
+      path: 'examData',
       populate: [{ path: 'sheet', select: 'description'}, { path: 'group', select: 'name'}],
     })
 
@@ -88,7 +81,7 @@ examController.getFormsExam = async (req, res) => {
 
 examController.getExam = async (req, res) => {
   try {
-    const exam = await Exam.findById(req.params.examId)
+    const exam = await ExamData.findById(req.params.examId)
       .populate({path: 'sheet', select: 'description'})
       .populate({path: 'group', select: 'name'})
     return res.json({success:true, exam})
@@ -100,8 +93,8 @@ examController.getExam = async (req, res) => {
 examController.getKardex = async (req, res) => {
   const {student, group} = req.body
   try {
-    const exams = await ApplyExam.find({student, group}).populate({
-      path: 'exam',
+    const exams = await Exam.find({student, group}).populate({
+      path: 'examData',
       populate: [{ path: 'sheet', select: 'description'}, { path: 'group', select: 'name'}],
     }).populate('sheet')
     return res.json({success:true, exams})
@@ -113,7 +106,7 @@ examController.getKardex = async (req, res) => {
 examController.updateExam = async (req, res) => {
   const {startDate, endDate, type} = req.body
   try {
-    const exam = await Exam.findByIdAndUpdate(req.params.examId, 
+    const exam = await ExamData.findByIdAndUpdate(req.params.examId, 
       {startDate, endDate, type}, {new: true}).populate('group').populate('sheet', {description: 1})
     return res.json({success:true, exam})
   } catch (err) {
@@ -123,14 +116,14 @@ examController.updateExam = async (req, res) => {
 
 examController.getFormExam = async (req, res) => {
   try {
-    const exam = await ApplyExam.findById(req.params.examId).populate({
-      path: 'exam',
+    const exam = await Exam.findById(req.params.examId).populate({
+      path: 'examData',
       populate: [{ path: 'sheet'}, { path: 'group', select: 'name'}],
     }).populate('sheet')
 
     const today = new Date()
-    const startDate = new Date(exam.exam.startDate)
-    const endDate = new Date(exam.exam.endDate)
+    const startDate = new Date(exam.examData.startDate)
+    const endDate = new Date(exam.examData.endDate)
 
     if( today >= startDate  || !exam.isActive ) {
       return res.json({success:true, exam})
@@ -144,8 +137,8 @@ examController.getFormExam = async (req, res) => {
 
 examController.getExams = async (req, res) => {
   try {
-    const exams = await ApplyExam.find({exam: req.params.examId}).populate({
-      path: 'exam',
+    const exams = await Exam.find({examData: req.params.examId}).populate({
+      path: 'examData',
       populate: [{ path: 'group', select: 'name'}],
     }).populate({
       path: 'student',
@@ -160,12 +153,12 @@ examController.getExams = async (req, res) => {
 examController.submitExam = async (req, res) => {
   const {exam, student, grade , answers, feedback, isActive} = req.body
   try {
-    const foundExam = await Exam.findById(exam)
+    const foundExam = await ExamData.findById(exam)
     const today = new Date()
     const startDate = new Date(foundExam.startDate)
     const endDate = new Date(foundExam.endDate)
 
-    const foundFormExam = await ApplyExam.findById(req.params.examId)
+    const foundFormExam = await Exam.findById(req.params.examId)
 
     if(!foundFormExam.isActive) {
       return res.json({success: false, message: 'Ya has agotado tus intentos.'})
@@ -175,7 +168,7 @@ examController.submitExam = async (req, res) => {
       return res.json({success: false, message: 'Fecha incorrecta.'})
     }
 
-    const updatedExam = await ApplyExam.findByIdAndUpdate(req.params.examId, {
+    const updatedExam = await Exam.findByIdAndUpdate(req.params.examId, {
       exam, student, grade, answers, feedback, isActive
     }, {new: true})
 
@@ -188,13 +181,13 @@ examController.submitExam = async (req, res) => {
 examController.updateApplyExam = async (req, res) => {
   const {exam, student, grade , answers, feedback, isActive} = req.body
   try {
-    const updatedExam = await ApplyExam.findByIdAndUpdate(req.params.examId, {
+    const updatedExam = await Exam.findByIdAndUpdate(req.params.examId, {
       exam, student, grade, answers, feedback, isActive
     }, {new: true}).populate({
       path: 'student',
       select: 'name'
     }).populate({
-      path: 'exam',
+      path: 'examData',
       populate: [{ path: 'sheet', select: 'description'}, { path: 'group', select: 'name'}],
     }).populate('sheet')
     return res.json({success:true, exam:updatedExam})
@@ -206,9 +199,9 @@ examController.updateApplyExam = async (req, res) => {
 examController.uploadImages = async (req, res) => {
   const {images} = req.body
   try {
-    const updatedExam = await ApplyExam.findByIdAndUpdate(req.params.examId, {images}, {new: true})
+    const updatedExam = await Exam.findByIdAndUpdate(req.params.examId, {images}, {new: true})
     .populate({
-      path: 'exam',
+      path: 'examData',
       populate: [{ path: 'sheet'}, { path: 'group', select: 'name'}],
     }).populate('sheet')
       
@@ -221,7 +214,7 @@ examController.uploadImages = async (req, res) => {
 examController.updateSheet = async (req, res) => {
   const {sheet} = req.body
   try {
-    const updatedExam = await ApplyExam.findByIdAndUpdate(req.params.examId, {sheet}, {new: true})
+    const updatedExam = await Exam.findByIdAndUpdate(req.params.examId, {sheet}, {new: true})
     return res.json({success:true, exam:updatedExam})
   } catch (err) {
     return res.json({success: false, message: err.message})

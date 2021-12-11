@@ -1,28 +1,37 @@
 const mongoose = require('mongoose')
 
 const ExamSchema = new mongoose.Schema({
+  examData: {
+    type: mongoose.SchemaTypes.ObjectId,
+    ref: 'ExamData',
+    required: true
+  },
   sheet: {
     type: mongoose.SchemaTypes.ObjectId,
     ref: 'Sheet',
     required: true
   },
-  group: {
+  student: {
     type: mongoose.SchemaTypes.ObjectId,
-    ref: 'Group',
-    required: true
+    ref: 'User',
+    require: true
   },
-  startDate: {
-    type: Date,
-    default: Date.now() // today
+  grade: {
+    type: Number,
+    default: 0
   },
-  endDate: {
-    type: Date,
-    default: Date.now() + 60 * 60 * 24 * 1000 // next day
+  answers: {
+    type: [mongoose.SchemaTypes.Mixed],
+    default: []
   },
-  type: String,
-  different: {
-    type: Boolean,
+  feedback: String,
+  isActive: {
+    type: Boolean, 
     default: true
+  },
+  images: {
+    type: [String],
+    default: []
   }
 })
 
